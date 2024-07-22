@@ -1,0 +1,28 @@
+# Handle line endings for text files
+* text=auto
+
+# Specify files that should always be treated as text
+*.c text
+*.h text
+*.cpp text
+*.hpp text
+*.py text
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.json text
+*.css text
+*.md text
+*.sh text
+*.yml text
+*.yaml text
+
+# Specify files that should always be treated as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.ico binary
