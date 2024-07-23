@@ -39,7 +39,7 @@ const Navbar = () => {
   
        
 
-      <Searchbar/>
+      {/* <Searchbar/> */}
 
 
         <div className="hidden sm:flex sm:gap-4 mt-2">
