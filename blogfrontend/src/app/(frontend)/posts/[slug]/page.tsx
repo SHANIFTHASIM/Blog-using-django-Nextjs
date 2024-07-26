@@ -14,6 +14,7 @@ import parse from 'html-react-parser';
 interface Profile {
   id: number;
   user: number;
+  email:string;
   full_name: string;
   bio: string;
   about: string;
@@ -250,6 +251,7 @@ const PostPage = () => {
 };
 
 export default PostPage;
+
 
 
 

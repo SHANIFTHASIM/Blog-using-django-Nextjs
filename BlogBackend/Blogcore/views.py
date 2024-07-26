@@ -207,18 +207,30 @@ class UserPostEditView(generics.UpdateAPIView):
     def perform_update(self, serializer):
         serializer.save(user=self.request.user)
 
-class CommentListCreate(generics.ListCreateAPIView):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-
-    def get_queryset(self):
-        post_id = self.request.query_params.get('post_id')
-        return Comment.objects.filter(post_id=post_id)
-
-    def perform_create(self, serializer):
-        serializer.save()
-
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def comment_list_create(request):
+    if request.method == 'GET':
+        post_id = request.query_params.get('post_id')
+        if post_id:
+            comments = Comment.objects.filter(post_id=post_id)
+            serializer = CommentSerializer(comments, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        return JsonResponse({"message": "post_id parameter is required"}, status=400)
+    
+    if request.method == 'POST':
+        post_id = request.data.get('post_id')
+        comment_text = request.data.get('comment')
+        if not post_id or not comment_text:
+            return JsonResponse({"message": "post_id and comment are required"}, status=400)
+        
+        post = get_object_or_404(Post, pk=post_id)
+        comment = Comment.objects.create(user=request.user, post=post, comment=comment_text)
+        serializer = CommentSerializer(comment)
+        return JsonResponse(serializer.data, status=201)
+    
 class CommentListAPIView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
     serializer_class = CommentSerializer
 
     def get_queryset(self):
@@ -324,18 +336,48 @@ class PostListView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = []
 
-    def get(self, request, *args, **kwargs):
-        logger.info("PostListView accessed")
-        return super().get(request, *args, **kwargs)
+    def get_queryset(self):
+        queryset = Post.objects.all()
+        search_query = self.request.query_params.get('search', None)
+        print(search_query)  # This should print the search query if the method is called
 
-class PostSearchView(APIView):
-    permission_classes = [AllowAny]
+        if search_query:
+            queryset = queryset.filter(title__icontains=search_query)
+            print(queryset.query)  # This should print the SQL query being executed
 
-    def get(self, request):
-        query = request.query_params.get('search', None)
-        if query:
-            posts = Post.objects.filter(title__icontains=query)
-            serializer = PostSerializer(posts, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response({"detail": "No Post matches the given query."}, status=status.HTTP_404_NOT_FOUND)
+        if not queryset.exists():
+            raise generics.NotFound("No Post matches the given query.")
+
+        return queryset
+
+class PostSearchView(generics.ListAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = []  # Allow all users to access
+
+    def get_queryset(self):
+        queryset = Post.objects.all()
+        search_query = self.request.query_params.get('search', None)
+        category_query = self.request.query_params.get('category', None)
+        if search_query:
+            queryset = queryset.filter(title__icontains=search_query)
+        if category_query:
+            queryset = queryset.filter(category__title__icontains=category_query)
+        return queryset
+    
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def all_posts_view(request):
+    try:
+        posts = Post.objects.all()
+        serializer = PostSerializer(posts, many=True)
+        return JsonResponse(serializer.data, safe=False, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)  # Allow all users to access
+    

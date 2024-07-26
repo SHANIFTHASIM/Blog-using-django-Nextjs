@@ -43,6 +43,10 @@ class Profile(models.Model):
     twitter = models.CharField(max_length=100, null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def email(self):
+        return self.user.email
+
     def __str__(self):
         if self.full_name:
             return str(self.full_name)
@@ -137,6 +141,7 @@ class Post(models.Model):
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     email = models.CharField(max_length=100)
     comment = models.TextField()
     reply = models.TextField(null=True, blank=True)

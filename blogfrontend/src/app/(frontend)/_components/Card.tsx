@@ -159,7 +159,7 @@ const Card: React.FC<CardProps> = ({ post: initialPost }) => {
             </span>
             <span className="text-slate-500 text-2xl" onClick={handleViewClick}>
               <IoEyeSharp />
-              {views}
+              {post.views}
             </span>
           </div>
         </div>

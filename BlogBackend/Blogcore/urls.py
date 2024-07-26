@@ -3,8 +3,8 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import  PostListView, RegisterView, UserView,  CustomTokenObtainPairView, PostCreateView,PostDetailView,CategoryListView,PostByCategoryView
-from .views import  ProfileDetailView,ProfileUpdateView,UserPostDetailView,UserPostsListCreateView,UserPostEditView,CommentListCreate
+from .views import   PostListView, RegisterView, UserView,  CustomTokenObtainPairView, PostCreateView,PostDetailView,CategoryListView,PostByCategoryView, all_posts_view, comment_list_create
+from .views import  ProfileDetailView,ProfileUpdateView,UserPostDetailView,UserPostsListCreateView,UserPostEditView
 from .views import   BookmarkedPostsListView,RecentPostsListView,FeaturedPostsView,ProfileView,PopularPostsView,TrendingPostsView
 
 urlpatterns = [
@@ -38,13 +38,15 @@ urlpatterns = [
     path('posts/<slug:slug>/edit/', UserPostEditView.as_view(), name='post-edit'),
     path('comments/user_posts/',views. UserPostCommentListAPIView.as_view(), name='user-posts-comment-list'),
 
-    path('comments/create/<int:pk>/', CommentListCreate.as_view(), name='comment-list-create'),
-    path('comments/', views.CommentListAPIView.as_view(), name='comment-list'),
+    path('comments/', comment_list_create, name='comment-list-create'),
+    path('comments/list/', views.CommentListAPIView.as_view(), name='comment-list'),
+    
 
     path('bookmarked-posts/', BookmarkedPostsListView.as_view(), name='bookmarked-posts'),
 
     path('posts/search/', views.PostSearchView.as_view(), name='post-search'),
     path('posts/all/', PostListView.as_view(), name='post-list'),
+    path('all-posts/', all_posts_view, name='all_posts'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -50,11 +50,7 @@ const menuItems = [
         path: "/Bookmark",
         icon: <MdWork />,
       },
-      {
-        title: "Reviews",
-        path: "/user/Reviews",
-        icon: <MdAnalytics />,
-      },
+  
     ],
   },
   {

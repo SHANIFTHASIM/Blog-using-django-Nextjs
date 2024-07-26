@@ -14,7 +14,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'full_name', 'bio', 'about', 'author', 'country', 'facebook', 'twitter', 'date','image']
+        fields = ['id', 'user', 'full_name', 'bio', 'about', 'author', 'country', 'facebook', 'twitter', 'date','image', 'email']
 
     
 class RegisterSerializer(serializers.ModelSerializer):
@@ -94,9 +94,12 @@ class BookmarkSerializer(serializers.ModelSerializer):
         return Bookmark.objects.create(**validated_data)
     
 class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()  # Adjust this according to your UserSerializer
+    
     class Meta:
         model = Comment
-        fields = ['id', 'post', 'name', 'email', 'comment', 'reply', 'date']
+        fields = ['id', 'user', 'post', 'comment', 'date',]
+
 
 class FeaturedPostSerializer(serializers.ModelSerializer):
     class Meta:
