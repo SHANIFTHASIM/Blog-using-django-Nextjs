@@ -68,7 +68,7 @@ const Navbar = () => {
             )}
           </>
         ) : (
-          <Link href="/Login">Login</Link>
+          <Link href="/Login" className=' ml-1 mr-1 mt-2'>Login</Link>
         )}
       </div>
       <ThemeToggle/>
