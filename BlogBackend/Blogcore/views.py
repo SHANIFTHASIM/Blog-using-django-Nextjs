@@ -207,6 +207,9 @@ class UserPostEditView(generics.UpdateAPIView):
     def perform_update(self, serializer):
         serializer.save(user=self.request.user)
 
+import json
+from django.http import JsonResponse
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def comment_list_create(request):
@@ -219,8 +222,15 @@ def comment_list_create(request):
         return JsonResponse({"message": "post_id parameter is required"}, status=400)
     
     if request.method == 'POST':
-        post_id = request.data.get('post_id')
-        comment_text = request.data.get('comment')
+        try:
+            data = json.loads(request.body)
+            post_id = data.get('post')
+            comment_text = data.get('comment')
+        except json.JSONDecodeError:
+            return JsonResponse({"message": "Invalid JSON"}, status=400)
+
+        print(f"Received POST data: post_id={post_id}, comment={comment_text}")
+
         if not post_id or not comment_text:
             return JsonResponse({"message": "post_id and comment are required"}, status=400)
         
@@ -246,11 +256,39 @@ class UserPostCommentListAPIView(generics.ListAPIView):
     def get_queryset(self):
         user_id = self.request.query_params.get('user_id')
         if user_id:
-            # Get all post IDs by this user
             post_ids = Post.objects.filter(user_id=user_id).values_list('id', flat=True)
-            # Return comments for these posts
-            return Comment.objects.filter(post_id__in=post_ids)
+            return Comment.objects.filter(post_id__in=post_ids, parent_comment=None)
         return Comment.objects.none()
+    
+class ReplyToCommentAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        parent_comment_id = request.data.get('parent_comment')
+        comment_text = request.data.get('comment')
+        post_id = request.data.get('post')
+
+        if not post_id or not comment_text or not parent_comment_id:
+            return Response({'detail': 'Post, comment, and parent comment are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            parent_comment = Comment.objects.get(id=parent_comment_id)
+            post = Post.objects.get(id=post_id)
+        except Comment.DoesNotExist:
+            return Response({'detail': 'Parent comment not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Post.DoesNotExist:
+            return Response({'detail': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_comment = Comment(
+            post=post,
+            name=request.user.username,
+            user=request.user,
+            email=request.user.email,
+            comment=comment_text,
+            parent_comment=parent_comment
+        )
+        new_comment.save()
+        return Response(CommentSerializer(new_comment).data, status=status.HTTP_201_CREATED)
     
 class BookmarkedPostsListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]

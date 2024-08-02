@@ -52,9 +52,14 @@ class PostAdmin(admin.ModelAdmin):
 
 
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('post', 'name', 'email', 'date')
-    search_fields = ('post__title', 'name', 'email')
-    ordering = ('date',)
+    list_display = ('post', 'name', 'user', 'email', 'comment', 'parent_comment', 'date')
+    list_filter = ('post', 'date')
+    search_fields = ('name', 'email', 'comment', 'post__title')
+    readonly_fields = ('date',)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('post', 'user', 'parent_comment')
 
 
 class BookmarkAdmin(admin.ModelAdmin):

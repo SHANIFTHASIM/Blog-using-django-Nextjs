@@ -37,6 +37,8 @@ urlpatterns = [
     path('user/posts/<slug:slug>/', UserPostDetailView.as_view(), name='user-post-detail'),
     path('posts/<slug:slug>/edit/', UserPostEditView.as_view(), name='post-edit'),
     path('comments/user_posts/',views. UserPostCommentListAPIView.as_view(), name='user-posts-comment-list'),
+    path('comments/reply/',views. ReplyToCommentAPIView.as_view(), name='user-posts-comment-reply-list'),
+    
 
     path('comments/', comment_list_create, name='comment-list-create'),
     path('comments/list/', views.CommentListAPIView.as_view(), name='comment-list'),

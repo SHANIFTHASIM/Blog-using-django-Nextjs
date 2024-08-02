@@ -95,10 +95,20 @@ class BookmarkSerializer(serializers.ModelSerializer):
     
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()  # Adjust this according to your UserSerializer
-    
+    replies = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'post', 'comment', 'date',]
+        fields = ['id', 'user', 'post', 'comment', 'date', 'parent_comment', 'replies']
+
+    def get_replies(self, obj):
+        # Prevent deep recursion by limiting the depth of replies
+        max_depth = self.context.get('max_depth', 1)
+        if max_depth > 0:
+            replies = obj.replies.all()
+            # Pass a decremented max_depth to avoid infinite recursion
+            return CommentSerializer(replies, many=True, context={'max_depth': max_depth - 1}).data
+        return []
 
 
 class FeaturedPostSerializer(serializers.ModelSerializer):

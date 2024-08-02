@@ -144,14 +144,14 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     email = models.CharField(max_length=100)
     comment = models.TextField()
-    reply = models.TextField(null=True, blank=True)
+    parent_comment = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.post.title} - {self.name}"
     
     class Meta:
-        verbose_name_plural = "Comment"
+        verbose_name_plural = "Comments"
 
 
 class Bookmark(models.Model):

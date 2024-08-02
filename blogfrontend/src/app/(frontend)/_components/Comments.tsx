@@ -7,30 +7,34 @@ import { fetchWithToken } from './utils';
 
 interface Comment {
   id: number;
-  user: string; // User's email instead of ID
+  user: string;
   post: number;
   comment: string;
   date: string;
+  parent_comment: number | null;
+  replies?: Comment[];
 }
 
 interface Profile {
   id: number;
-  user: number; // You might not need this if using email
+  user: number;
   full_name: string;
   image: string;
-  email: string; // Add email to the profile
+  email: string;
 }
 
 interface Props {
   postId: number;
-  user: Profile | null; // Receive user data from PostPage
+  user: Profile | null;
 }
 
 const Comments: React.FC<Props> = ({ postId, user }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [replyContent, setReplyContent] = useState<{ [key: number]: string }>({});
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeReply, setActiveReply] = useState<number | null>(null);
 
   useEffect(() => {
     fetchComments();
@@ -65,7 +69,7 @@ const Comments: React.FC<Props> = ({ postId, user }) => {
   };
 
   const handleCommentSubmit = async () => {
-    if (!user) return; // Don't allow submitting if user is not logged in
+    if (!user) return;
 
     try {
       const response = await fetchWithToken(`http://127.0.0.1:8000/comments/`, {
@@ -75,24 +79,119 @@ const Comments: React.FC<Props> = ({ postId, user }) => {
         },
         body: JSON.stringify({
           comment: newComment,
-          post_id: postId,
+          post: postId,
+          parent_comment: null
         }),
       });
 
       if (response.ok) {
-        fetchComments(); // Refresh comments after successful submission
-        setNewComment(""); // Clear the input field
+        fetchComments();
+        setNewComment("");
       } else {
-        console.error('Failed to submit comment');
+        const errorData = await response.json();
+        console.error('Failed to submit comment:', errorData.message);
       }
     } catch (error) {
       console.error('Error submitting comment:', error);
     }
   };
 
+  const handleReplySubmit = async (commentId: number) => {
+    if (!user || !replyContent[commentId]) return;
+
+    try {
+      const response = await fetchWithToken(`http://127.0.0.1:8000/comments/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          comment: replyContent[commentId],
+          post: postId,
+          parent_comment: commentId
+        }),
+      });
+
+      if (response.ok) {
+        fetchComments();
+        setReplyContent(prev => ({ ...prev, [commentId]: "" }));
+        setActiveReply(null); // Close the reply form after submitting
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to submit reply:', errorData.message);
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+    }
+  };
+
+  const handleReplyChange = (commentId: number, content: string) => {
+    setReplyContent(prev => ({ ...prev, [commentId]: content }));
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
+
+  const renderComment = (comment: Comment) => {
+    const profile = profiles.find(profile => profile.email === comment.user);
+    return (
+      <div className="mb-12" key={comment.id}>
+        <div className="flex items-center gap-5 mb-5">
+          <Image
+            src={profile?.image || "/default-avatar.jpg"}
+            alt="User Avatar"
+            width={50}
+            height={50}
+            className="rounded-full w-[50px] h-[50px] object-cover"
+          />
+          <div className="flex flex-col gap-1 text-slate-500">
+            <span className="font-medium">{profile?.full_name || comment.user || "Unknown User"}</span>
+            <span className="text-sm">{new Date(comment.date).toLocaleDateString()}</span>
+          </div>
+        </div>
+        <p className="text-l font-light">{comment.comment}</p>
+
+        {user && (
+          <div className="mt-2">
+            {activeReply === comment.id ? (
+              <div>
+                <textarea
+                  placeholder="Write a reply..."
+                  className="p-2 w-full border-2 border-slate-900"
+                  value={replyContent[comment.id] || ""}
+                  onChange={(e) => handleReplyChange(comment.id, e.target.value)}
+                />
+                <button
+                  className="mt-2 mr-2 px-4 py-2 text-white font-bold border-none rounded-md cursor-pointer bg-slate-900"
+                  onClick={() => handleReplySubmit(comment.id)}
+                >
+                  Submit
+                </button>
+                <button
+                  className="mt-2 px-4 py-2 text-white font-bold border-none rounded-md cursor-pointer bg-gray-600"
+                  onClick={() => setActiveReply(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                className="mt-2 px-4 py-2 text-white font-bold border-none rounded-md cursor-pointer bg-slate-900"
+                onClick={() => setActiveReply(comment.id)}
+              >
+                Reply
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="mt-4 pl-4 border-l-2 border-gray-200">
+          {comment.replies && comment.replies.map(renderComment)}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="mt-12 w-[800px]">
@@ -116,34 +215,16 @@ const Comments: React.FC<Props> = ({ postId, user }) => {
         <Link href="/login">Login to write a comment</Link>
       )}
       <div className="mt-12">
-        {comments.map((comment) => {
-          // Find the profile by email
-          const profile = profiles.find(profile => profile.email === comment.user);
-          return (
-            <div className="mb-12" key={comment.id}>
-              <div className="flex items-center gap-5 mb-5">
-                <Image
-                  src={profile?.image || "/default-avatar.jpg"}
-                  alt="comment image"
-                  width={50}
-                  height={50}
-                  className="rounded-[50%] w-[50px] h-[50px] object-cover"
-                />
-                <div className="flex flex-col gap-1 text-slate-500">
-                  <span className="font-medium">{comment.user || "Unknown User"}</span>
-                  <span className="text-sm">{new Date(comment.date).toLocaleDateString()}</span>
-                </div>
-              </div>
-              <p className="text-l font-light">{comment.comment}</p>
-            </div>
-          );
-        })}
+        {comments.filter(comment => comment.parent_comment === null).map(renderComment)}
       </div>
     </div>
   );
 };
 
 export default Comments;
+
+
+
 
 
 
