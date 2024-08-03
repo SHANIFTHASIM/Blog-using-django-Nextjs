@@ -18,6 +18,10 @@ from rest_framework.exceptions import NotFound
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q, Subquery, OuterRef
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from google.cloud import texttospeech
+import os
 
 
 User = get_user_model()
@@ -249,16 +253,14 @@ class CommentListAPIView(generics.ListAPIView):
             return Comment.objects.filter(post_id=post_id)
         return Comment.objects.none()
 
-class UserPostCommentListAPIView(generics.ListAPIView):
+class UserPostCommentsAPIView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
+    pagination_class = None  # Disable pagination
 
     def get_queryset(self):
-        user_id = self.request.query_params.get('user_id')
-        if user_id:
-            post_ids = Post.objects.filter(user_id=user_id).values_list('id', flat=True)
-            return Comment.objects.filter(post_id__in=post_ids, parent_comment=None)
-        return Comment.objects.none()
+        user = self.request.user
+        return Comment.objects.filter(post__user=user).prefetch_related('replies')
     
 class ReplyToCommentAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -418,4 +420,26 @@ def all_posts_view(request):
         return JsonResponse(serializer.data, safe=False, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)  # Allow all users to access
-    
+
+import pyttsx3
+from django.http import HttpResponse
+
+@csrf_exempt
+def text_to_speech(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            text = data.get('text', 'Hello, this is a test.')
+
+            engine = pyttsx3.init()
+            engine.save_to_file(text, "output.mp3")
+            engine.runAndWait()
+
+            with open("output.mp3", "rb") as audio_file:
+                response = HttpResponse(audio_file.read(), content_type="audio/mp3")
+                response['Content-Disposition'] = 'attachment; filename="output.mp3"'
+                return response
+        except Exception as e:
+            return HttpResponse(status=500, content=str(e))
+    else:
+        return HttpResponse(status=405)

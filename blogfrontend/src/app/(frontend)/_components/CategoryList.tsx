@@ -35,7 +35,7 @@ const CategoryList = () => {
   }, []);
 
   return (
-    <div className=' mt-36'>
+    <div className=' mt-[200px]'>
       <h1 className="mt-12 ml-0 mr-0">Popular Categories</h1>
       <div className="flex  flex-wrap justify-between gap-5">
         {categories.map((category, index) => (

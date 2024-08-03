@@ -14,7 +14,7 @@ import parse from 'html-react-parser';
 interface Profile {
   id: number;
   user: number;
-  email:string;
+  email: string;
   full_name: string;
   bio: string;
   about: string;
@@ -50,6 +50,7 @@ const PostPage = () => {
   const [views, setViews] = useState(0);
   const [liked, setLiked] = useState(false);
   const [user, setUser] = useState<Profile | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null); // For audio playback
 
   useEffect(() => {
     if (slug) {
@@ -152,11 +153,29 @@ const PostPage = () => {
     }
   };
 
-  useEffect(() => {
-    if (slug) {
-      fetchPostData(slug);
+  const handleReadAloud = async () => {
+    if (!post) return;
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/text-to-speech/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: post.description }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch audio');
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      setAudioUrl(audioUrl);
+    } catch (error) {
+      console.error('Error:', error);
     }
-  }, [slug]);
+  };
 
   useEffect(() => {
     const likedInStorage = sessionStorage.getItem(`liked_${post?.slug}`);
@@ -214,19 +233,36 @@ const PostPage = () => {
               <span className="text-sm">{new Date(post.date).toLocaleDateString()}</span>
             </div>
           </div>
-          <div className="flex flex-row gap-4 cursor-pointer p-2 mt-4">
-            <span className="text-xl" onClick={handleBookmarkClick}>
+          <div className="flex flex-row gap-4 cursor-pointer p-2 mb-4">
+            <span
+              className="text-xl p-2 rounded-full transition-colors hover:bg-gray-200"
+              onClick={handleBookmarkClick}
+            >
               <BsFillBookmarkFill color={post.is_bookmarked ? 'red' : 'gray'} />
             </span>
-            <span className="text-xl flex items-center" onClick={handleLikeClick}>
+            <span
+              className="text-xl p-2 rounded-full transition-colors hover:bg-gray-200 flex items-center"
+              onClick={handleLikeClick}
+            >
               <AiFillLike color={liked ? 'red' : 'gray'} />
               <span className="ml-1">{likes}</span>
             </span>
-            <span className="text-xl flex items-center">
+            <span className="text-xl p-2 rounded-full transition-colors hover:bg-gray-200 flex items-center">
               <IoEyeSharp />
               <span className="ml-1">{views}</span>
             </span>
+            <span
+              className="text-xl p-2 rounded-full transition-colors hover:bg-gray-200 flex items-center cursor-pointer"
+              onClick={handleReadAloud}
+            >
+              🔊
+            </span>
           </div>
+          {audioUrl && (
+            <div className="mt-4">
+              <audio controls src={audioUrl} className="" />
+            </div>
+          )}
         </div>
         {post.image && (
           <div className="flex-1 h-72 relative hidden lg:block">
@@ -237,6 +273,7 @@ const PostPage = () => {
 
       <div className="flex flex-col lg:flex-row gap-10 mt-10">
         <div className="flex-5">
+
           <div className="text-lg font-light text-gray-800">
             <div className="mb-5">{parse(post.description)}</div>
             <Comments postId={post.id} user={user} />
@@ -246,11 +283,15 @@ const PostPage = () => {
           <Menu />
         </div>
       </div>
+
+
     </div>
   );
 };
 
 export default PostPage;
+
+
 
 
 

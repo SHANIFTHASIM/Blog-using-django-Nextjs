@@ -3,7 +3,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import   PostListView, RegisterView, UserView,  CustomTokenObtainPairView, PostCreateView,PostDetailView,CategoryListView,PostByCategoryView, all_posts_view, comment_list_create
+from .views import   PostListView, RegisterView, UserView,  CustomTokenObtainPairView, PostCreateView,PostDetailView,CategoryListView,PostByCategoryView, all_posts_view, comment_list_create, text_to_speech
 from .views import  ProfileDetailView,ProfileUpdateView,UserPostDetailView,UserPostsListCreateView,UserPostEditView
 from .views import   BookmarkedPostsListView,RecentPostsListView,FeaturedPostsView,ProfileView,PopularPostsView,TrendingPostsView
 
@@ -36,7 +36,7 @@ urlpatterns = [
     path('user/posts/', UserPostsListCreateView.as_view(), name='user-posts-list-create'),
     path('user/posts/<slug:slug>/', UserPostDetailView.as_view(), name='user-post-detail'),
     path('posts/<slug:slug>/edit/', UserPostEditView.as_view(), name='post-edit'),
-    path('comments/user_posts/',views. UserPostCommentListAPIView.as_view(), name='user-posts-comment-list'),
+    path('comments/user_posts/',views. UserPostCommentsAPIView.as_view(), name='user-posts-comment-list'),
     path('comments/reply/',views. ReplyToCommentAPIView.as_view(), name='user-posts-comment-reply-list'),
     
 
@@ -49,6 +49,7 @@ urlpatterns = [
     path('posts/search/', views.PostSearchView.as_view(), name='post-search'),
     path('posts/all/', PostListView.as_view(), name='post-list'),
     path('all-posts/', all_posts_view, name='all_posts'),
+    path('api/text-to-speech/', text_to_speech, name='text_to_speech'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
