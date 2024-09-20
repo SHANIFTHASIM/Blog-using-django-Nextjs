@@ -82,7 +82,7 @@ const Sidebar = () => {
           height={50}
         /> */}
         <div className="flex flex-col">
-          <span className="font-medium text-white">Hello :username</span>
+          <span className="font-medium text-white">Hello </span>
         </div>
       </div>
       <ul className="list-none text-white">

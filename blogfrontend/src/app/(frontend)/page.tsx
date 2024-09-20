@@ -1,3 +1,5 @@
+"use client"
+
 import Cardlist from "./_components/Cardlist";
 import CategoryList from "./_components/CategoryList";
 import Featured from "./_components/Featured";

@@ -22,6 +22,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from google.cloud import texttospeech
 import os
+from django.core.exceptions import ObjectDoesNotExist
 
 
 User = get_user_model()
@@ -128,7 +129,13 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        return self.request.user.profile
+        user = self.request.user
+        try:
+            # Return the user's profile if it exists
+            return user.profile
+        except ObjectDoesNotExist:
+            # Handle case where the user has no profile
+            return Profile.objects.create(user=user)
     
 
 class ProfileView(generics.ListAPIView):

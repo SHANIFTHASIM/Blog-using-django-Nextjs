@@ -27,8 +27,8 @@ const Navbar = () => {
   return (
     <div className="flex items-center justify-between h-24 px-4">
       {/* <div className="hidden lg:flex gap-2 flex-1"> */}
-      <div className="flex-1 text-center font-bold text-4xl md:text-2xl lg:text-left xl:text-3xl">
-        BlogApp
+      <div className="flex-1 text-center font-bold text-4xl md:text-2xl lg:text-left xl:text-3xl font-serif">
+        Dazzle
       </div>
       {/* </div> */}
 
