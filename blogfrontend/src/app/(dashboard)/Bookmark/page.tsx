@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { fetchWithToken } from '@/app/(frontend)/_components/utils';
+import parse from 'html-react-parser';
 
 interface Post {
   id: number;
@@ -49,7 +50,7 @@ const BookmarkedPosts: React.FC = () => {
           <div key={post.id} className="bg-white rounded-lg shadow-xl p-4">
             <h2 className="text-lg font-semibold text-gray-900">{post.title}</h2>
             <p className="mt-2 text-gray-500">{new Date(post.date).toLocaleDateString()}</p>
-            <p className="mt-2 text-gray-800">{post.description}</p>
+            <p className="mt-2 text-gray-800">{parse(post.description)}</p>
             <Image
               src={`http://localhost:8000/${post.image}`}
               alt="Post Image"
